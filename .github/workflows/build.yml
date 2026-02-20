@@ -17,5 +17,14 @@ jobs:
       - name: Update to nightly Rust
         run: rustup override set nightly
 
+      - name: Install dependencies
+        run: make packages
+
       - name: Build with Makefile
         run: make iso
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: thaunos-x86_64.iso
+          path: output/thaunos-x86_64.iso
