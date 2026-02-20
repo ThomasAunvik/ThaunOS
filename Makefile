@@ -119,7 +119,8 @@ clean:
 	rm -rf $(ISO_DIR) $(ISO_OUTPUT_DIR) $(BUILD_DIR)
 
 packages:
-	sudo apt install -y build-essential libclang-dev xorriso qemu-system
+	sudo apt-get update
+	sudo apt-get install -y build-essential libclang-dev xorriso qemu-system
 
 .PHONY: \
 	all \
