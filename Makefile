@@ -1,0 +1,64 @@
+# Toolchain
+AS = i686-elf-as
+CC = i686-elf-gcc
+LD = i686-elf-gcc
+
+# Compiler flags
+CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+LDFLAGS = -ffreestanding -O2 -nostdlib
+
+# Target
+TARGET = thaunos.bin
+
+# Output directory
+BUILD_DIR = build
+ISO_OUTPUT_DIR = output
+ISO_DIR = iso
+ISO_FILE = thaunos.iso
+
+# Object files
+OBJS = $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o
+
+# Default target
+all: $(TARGET)
+
+# Link kernel
+$(TARGET): $(OBJS)
+	$(LD) -T linker.ld -o $@ $(LDFLAGS) $(OBJS) -lgcc
+
+# Compile boot.asm
+$(BUILD_DIR)/boot.o: boot.asm
+	mkdir -p $(BUILD_DIR)
+	$(AS) boot.asm -o $(BUILD_DIR)/boot.o
+
+# Compile kernel.c
+$(BUILD_DIR)/kernel.o: kernel.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) -c kernel.c -o $(BUILD_DIR)/kernel.o $(CFLAGS)
+
+verify:
+	if grub-file --is-x86-multiboot $(TARGET); then echo multiboot confirmed; else echo the file is not multiboot; fi
+
+iso: $(TARGET)
+	mkdir -p $(ISO_DIR)/boot/grub
+	cp $(TARGET) $(ISO_DIR)/boot/$(TARGET)
+	echo 'set timeout=0' > $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "Thaunos" {' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '    multiboot /boot/$(TARGET)' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '    boot' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '}' >> $(ISO_DIR)/boot/grub/grub.cfg
+
+	mkdir -p $(ISO_OUTPUT_DIR)
+	grub-mkrescue -o $(ISO_OUTPUT_DIR)/$(ISO_FILE) $(ISO_DIR)
+
+run: iso
+	qemu-system-i386 -cdrom $(ISO_OUTPUT_DIR)/$(ISO_FILE)
+
+# Clean build artifacts
+clean:
+	rm -f $(OBJS) $(TARGET)
+	rm -rf $(ISO_DIR) $(ISO_OUTPUT_DIR) $(BUILD_DIR)
+
+.PHONY: all verify clean

@@ -1,0 +1,5 @@
+*.o
+build/
+iso/
+output/
+thaunos.bin
