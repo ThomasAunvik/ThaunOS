@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Update to nightly Rust
         run: rustup override set nightly
@@ -24,7 +24,7 @@ jobs:
         run: make iso
 
       - name: Upload ISO artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: thaunos-x86_64.iso
           path: output/thaunos-x86_64.iso
