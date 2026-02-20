@@ -8,7 +8,7 @@ use spin::Mutex;
 mod font;
 
 const FONT_WIDTH: usize = 8;
-const FONT_HEIGHT: usize = 8;
+const FONT_HEIGHT: usize = 16;
 
 pub static TERMINAL: Mutex<Terminal> = Mutex::new(Terminal::new());
 
