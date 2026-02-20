@@ -1,9 +1,9 @@
 #![no_std]
 
-extern crate vga;
+extern crate vga_i386;
 
 use spin::Mutex;
-use vga::{ 
+use vga_i386::{ 
     vga_entry_color,
     vga_entry,
     VGA_COLOR_LIGHT_GREY,

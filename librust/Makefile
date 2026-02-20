@@ -1,3 +1,5 @@
+ARCH_RUST_TARGET ?= i686-unknown-linux-gnu
+
 .PHONY: build release test clean run help
 
 help:
@@ -12,10 +14,10 @@ help:
 	@echo "  lint        - Run clippy linter"
 
 build:
-	cargo build --release --target=i686-unknown-linux-gnu
+	cargo build --release --target=$(ARCH_RUST_TARGET)
 
 release:
-	cargo build --release --target=i686-unknown-linux-gnu
+	cargo build --release --target=$(ARCH_RUST_TARGET)
 
 test:
 	cargo test

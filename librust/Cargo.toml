@@ -7,10 +7,13 @@ edition = "2024"
 crate-type = ["lib", "staticlib"]
 
 [dependencies]
-tty = { path = "../kernel/arch/i386/tty", version = "0.1.0" }
+tty-x86_64 = { path = "../kernel/arch/x86_64/tty", version = "0.1.0" }
 
 [target.i686-unknown-linux-gnu.dependencies]
-tty = { path = "../kernel/arch/i386/tty", version = "0.1.0" }
+tty-i386 = { path = "../kernel/arch/i386/tty", version = "0.1.0" }
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+tty-x86_64 = { path = "../kernel/arch/x86_64/tty", version = "0.1.0" }
 
 
 [build-dependencies]

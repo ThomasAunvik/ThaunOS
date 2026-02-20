@@ -2,7 +2,10 @@
 members = [
     "arch/i386/vga",
     "arch/i386/tty",
-    "kernel",
+    "arch/x86_64/vga",
+    "arch/x86_64/tty",
+    "arch/x86_64/limine",
+    "kernel", "arch/x86_64/limine",
 ]
 resolver = "3"
 

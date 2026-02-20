@@ -1,5 +1,5 @@
 [package]
-name = "vga-i386"
+name = "vga-x86_64"
 version = "0.1.0"
 edition = "2024"
 

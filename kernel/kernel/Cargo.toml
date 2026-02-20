@@ -4,12 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tty = { path = "../arch/i386/tty", version = "0.1.0" }
+tty-x86_64 = { path = "../arch/x86_64/tty", version = "0.1.0" }
 librust = { path = "../../librust", version = "0.1.0" }
 
 [target.i686-unknown-linux-gnu.dependencies]
-tty = { path = "../arch/i386/tty", version = "0.1.0" }
+tty-i386 = { path = "../arch/i386/tty", version = "0.1.0" }
 
+[target.x86_64-unknown-linux-gnu.dependencies]
+limine = { path = "../arch/x86_64/limine", version = "0.1.0" }
 
 [build-dependencies]
 cbindgen = "0.29.2"
