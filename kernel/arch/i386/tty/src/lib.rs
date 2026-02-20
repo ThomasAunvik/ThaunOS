@@ -2,6 +2,7 @@
 
 extern crate vga;
 
+use spin::Mutex;
 use vga::{ 
     vga_entry_color,
     vga_entry,
@@ -12,6 +13,8 @@ use vga::{
 const VGA_WIDTH: usize = 80;
 const VGA_HEIGHT: usize = 25;
 const VGA_BUFFER_ADDR: usize = 0xB8000;
+
+pub static TERMINAL: Mutex<Terminal> = Mutex::new(Terminal::new());
 
 pub struct Terminal {
     row: usize,
@@ -38,13 +41,18 @@ fn vga_read(index: usize) -> u16 {
 }
 
 impl Terminal {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
+        return Terminal { row: 0, column: 0, color: 0 };
+    }
+
+    pub fn clear(&mut self) {
         let color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
         let entry = vga_entry(b' ', color);
         for i in 0..(VGA_WIDTH * VGA_HEIGHT) {
             vga_write(i, entry);
         }
-        Terminal { row: 0, column: 0, color }
+        self.row = 0;
+        self.column = 0;
     }
 
     #[unsafe(no_mangle)]

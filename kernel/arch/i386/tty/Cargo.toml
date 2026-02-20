@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+spin = "0.10.0"
 vga = { path = "../vga", version = "0.1.0" }
 
 [lib]
 crate-type = ["lib", "staticlib"]
+
+[build-dependencies]
+cbindgen = "0.29.2"

@@ -1,6 +1,7 @@
 DEFAULT_HOST=i386-elf
 HOST=i386-elf
 HOSTARCH=i386
+RUST_TARGET=i686-unknown-linux-gnu
 
 CFLAGS?=-O2 -g
 LDFLAGS?=
@@ -8,11 +9,12 @@ CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
 
-CC = i686-elf-gcc --sysroot=../sysroot
+AS = i686-elf-as
+CC = i686-elf-gcc
 LD = i686-elf-gcc
 
 RC=rustc
-RC_OPTIONS=-C opt-level=2 -C panic=abort --target=i686-unknown-linux-gnu -g --crate-type=staticlib
+RC_OPTIONS=-C opt-level=2 -C panic=abort --target=$(RUST_TARGET) -g --crate-type=staticlib
 
 DESTDIR?=../iso/
 PREFIX?=/usr/local
@@ -39,7 +41,8 @@ $(KERNEL_ARCH_OBJS)
 
 KERNEL_RUST_OBJS=\
 $(KERNEL_ARCH_RUST_OBJS) \
-target/i686-unknown-linux-gnu/release/libkernel.a
+target/$(RUST_TARGET)/release/libkernel.a \
+../librust/target/$(RUST_TARGET)/release/liblibrust.a
 
 KERNEL_RUST_PROJECTS=\
 $(KERNEL_ARCH_RUST_PROJECTS) \
@@ -78,16 +81,17 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
 build:
-	cargo build --release --target=i686-unknown-linux-gnu
+	cargo build --release --target=$(RUST_TARGET)
 #$(RC) ${RC_OPTIONS} -o $@ $(shell dirname $@ | cut -d'/' -f-3)/src/lib.rs
 
 .asm.o:
-	i686-elf-as $< -o $@
+	$(AS) $< -o $@
 
 clean:
 	rm -f thaunos.kernel
 	rm -f $(OBJS) *.o */*.o */*/*.o
 	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	rm -rf target
 
 install: install-headers install-kernel
 

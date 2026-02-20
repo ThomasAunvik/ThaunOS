@@ -1,0 +1,26 @@
+[package]
+name = "librust"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["lib", "staticlib"]
+
+[dependencies]
+tty = { path = "../kernel/arch/i386/tty", version = "0.1.0" }
+
+[target.i686-unknown-linux-gnu.dependencies]
+tty = { path = "../kernel/arch/i386/tty", version = "0.1.0" }
+
+
+[build-dependencies]
+cbindgen = "0.29.2"
+
+
+[profile.dev]
+panic = "abort"
+opt-level = 2
+
+[profile.release]
+panic = "abort"
+opt-level = 2

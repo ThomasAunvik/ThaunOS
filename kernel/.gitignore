@@ -2,3 +2,4 @@ target/
 out/
 
 thaunos.kernel
+thaunos-x86_64.kernel

@@ -5,9 +5,14 @@ edition = "2024"
 
 [dependencies]
 tty = { path = "../arch/i386/tty", version = "0.1.0" }
+librust = { path = "../../librust", version = "0.1.0" }
 
 [target.i686-unknown-linux-gnu.dependencies]
 tty = { path = "../arch/i386/tty", version = "0.1.0" }
+
+
+[build-dependencies]
+cbindgen = "0.29.2"
 
 [lib]
 crate-type = ["lib", "staticlib"]
