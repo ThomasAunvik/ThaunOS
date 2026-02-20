@@ -76,7 +76,7 @@ iso-x86_64: $(TARGET) kernel ./limine ./limine.conf
         -efi-boot-part --efi-boot-image --protective-msdos-label \
         $(ISO_DIR) -o $(ISO_OUTPUT_DIR)/$(ISO_FILE)
 	
-	./limine/limine bios-install $(ISO_OUTPUT_DIR)/$(ISO_FILE)
+	./limine/limine bios-install $(ISO_OUTPUT_DIR)/$(ISO_FILE) --quiet
 
 disk: disk-$(ARCH)
 disk-i386: iso-i386
@@ -118,6 +118,9 @@ clean:
 	cd librust && $(MAKE) clean
 	rm -rf $(ISO_DIR) $(ISO_OUTPUT_DIR) $(BUILD_DIR)
 
+packages:
+	sudo apt install -y build-essential libclang-dev xorriso qemu-system
+
 .PHONY: \
 	all \
 	kernel \
@@ -128,4 +131,5 @@ clean:
 	iso-i386 \
 	iso-x86_64 \
 	run \
-	clean
+	clean \
+	packages

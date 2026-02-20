@@ -1,5 +1,7 @@
 target/
 out/
 
+!arch/x86_64/limine/
+
 thaunos.kernel
 thaunos-x86_64.kernel
