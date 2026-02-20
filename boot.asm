@@ -66,6 +66,21 @@ _start:
 	mov $stack_top, %esp
 
 	/*
+	Enable SSE instructions. The CPU has SSE disabled after boot.
+	1) Clear CR0.EM (bit 2) to disable x87 FPU emulation
+	2) Set CR0.MP (bit 1) to enable monitoring of the coprocessor
+	3) Set CR4.OSFXSR (bit 9) to enable FXSAVE/FXRSTOR
+	4) Set CR4.OSXMMEXCPT (bit 10) to enable unmasked SSE exceptions
+	*/
+	mov %cr0, %eax
+	and $0xFFFFFFFB, %eax  /* clear EM (bit 2) */
+	or  $0x2, %eax         /* set MP (bit 1) */
+	mov %eax, %cr0
+	mov %cr4, %eax
+	or  $0x600, %eax       /* set OSFXSR (bit 9) and OSXMMEXCPT (bit 10) */
+	mov %eax, %cr4
+
+	/*
 	This is a good place to initialize crucial processor state before the
 	high-level kernel is entered. It's best to minimize the early
 	environment where crucial features are offline. Note that the

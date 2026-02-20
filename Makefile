@@ -4,8 +4,8 @@ CC = i686-elf-gcc
 LD = i686-elf-gcc
 
 # Compiler flags
-CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-LDFLAGS = -ffreestanding -O2 -nostdlib
+CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra 
+LDFLAGS = -ffreestanding -O2 -nostdlib 
 
 # Target
 TARGET = thaunos.bin
@@ -17,14 +17,15 @@ ISO_DIR = iso
 ISO_FILE = thaunos.iso
 
 # Object files
-OBJS = $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o
+OBJS = $(BUILD_DIR)/boot.o
+LIBS = -Lkernel/out -llib -lgcc
 
 # Default target
 all: $(TARGET)
 
 # Link kernel
 $(TARGET): $(OBJS)
-	$(LD) -T linker.ld -o $@ $(LDFLAGS) $(OBJS) -lgcc
+	$(LD) -T linker.ld -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 
 # Compile boot.asm
 $(BUILD_DIR)/boot.o: boot.asm
@@ -32,9 +33,11 @@ $(BUILD_DIR)/boot.o: boot.asm
 	$(AS) boot.asm -o $(BUILD_DIR)/boot.o
 
 # Compile kernel.c
-$(BUILD_DIR)/kernel.o: kernel.c
-	mkdir -p $(BUILD_DIR)
-	$(CC) -c kernel.c -o $(BUILD_DIR)/kernel.o $(CFLAGS)
+# To disable SSE2 instructions, you can add the following flags to the rustc command:
+# -C target-feature=-sse,-sse2
+$(BUILD_DIR)/kernel.o: kernel
+	rustc -C opt-level=2 --target=i686-unknown-linux-gnu -g --crate-type=staticlib --out-dir ./kernel/out ./kernel/src/lib.rs
+
 
 verify:
 	if grub-file --is-x86-multiboot $(TARGET); then echo multiboot confirmed; else echo the file is not multiboot; fi

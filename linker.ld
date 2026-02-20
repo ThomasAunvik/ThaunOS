@@ -26,18 +26,21 @@ SECTIONS
 	{
 		*(.multiboot)
 		*(.text)
+		*(.text.*)
 	}
 
 	/* Read-only data. */
 	.rodata BLOCK(4K) : ALIGN(4K)
 	{
 		*(.rodata)
+		*(.rodata.*)
 	}
 
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
 	{
 		*(.data)
+		*(.data.*)
 	}
 
 	/* Read-write data (uninitialized) and stack */
@@ -45,6 +48,7 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
+		*(.bss.*)
 	}
 
 	/* The compiler may produce other sections, by default it will put them in
