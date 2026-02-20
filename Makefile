@@ -18,13 +18,15 @@ ISO_FILE = thaunos.iso
 
 # Object files
 OBJS = $(BUILD_DIR)/boot.o
-LIBS = -Lkernel/out -llib -lgcc
+BUILD_LIBS = kernel/out/libkernel.a
+
+LIBS = -Lkernel/out -lkernel -lgcc
 
 # Default target
 all: $(TARGET)
 
 # Link kernel
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) ${BUILD_LIBS}
 	$(LD) -T linker.ld -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 
 # Compile boot.asm
@@ -35,8 +37,8 @@ $(BUILD_DIR)/boot.o: boot.asm
 # Compile kernel.c
 # To disable SSE2 instructions, you can add the following flags to the rustc command:
 # -C target-feature=-sse,-sse2
-$(BUILD_DIR)/kernel.o: kernel
-	rustc -C opt-level=2 --target=i686-unknown-linux-gnu -g --crate-type=staticlib --out-dir ./kernel/out ./kernel/src/lib.rs
+kernel/out/libkernel.a: kernel/src/lib.rs
+	rustc -C opt-level=2 -C panic=abort --target=i686-unknown-linux-gnu -g --crate-type=staticlib -o kernel/out/libkernel.a ./kernel/src/lib.rs
 
 
 verify:
@@ -63,5 +65,6 @@ run: iso
 clean:
 	rm -f $(OBJS) $(TARGET)
 	rm -rf $(ISO_DIR) $(ISO_OUTPUT_DIR) $(BUILD_DIR)
+	rm -rf kernel/out kernel/target
 
 .PHONY: all verify clean

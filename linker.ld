@@ -4,6 +4,13 @@ ENTRY(_start)
 
 /* Tell where the various sections of the object files will be put in the final
    kernel image. */
+PHDRS
+{
+	text PT_LOAD FLAGS(5);   /* read + execute */
+	rodata PT_LOAD FLAGS(4); /* read only */
+	data PT_LOAD FLAGS(6);   /* read + write */
+}
+
 SECTIONS
 {
 	/* It used to be universally recommended to use 1M as a start offset,
@@ -27,21 +34,21 @@ SECTIONS
 		*(.multiboot)
 		*(.text)
 		*(.text.*)
-	}
+	} :text
 
 	/* Read-only data. */
 	.rodata BLOCK(4K) : ALIGN(4K)
 	{
 		*(.rodata)
 		*(.rodata.*)
-	}
+	} :rodata
 
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
 	{
 		*(.data)
 		*(.data.*)
-	}
+	} :data
 
 	/* Read-write data (uninitialized) and stack */
 	.bss BLOCK(4K) : ALIGN(4K)
@@ -49,7 +56,7 @@ SECTIONS
 		*(COMMON)
 		*(.bss)
 		*(.bss.*)
-	}
+	} :data
 
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */

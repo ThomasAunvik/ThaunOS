@@ -1,4 +1,14 @@
-#![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
+#![no_std]
+#![allow(dead_code, non_camel_case_types)]
+
+#[cfg(not(test))]
+use core::panic::PanicInfo;
+
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
+}
 
 pub type size_t = usize;
 pub type uint8_t = u8;
@@ -22,213 +32,121 @@ pub const VGA_COLOR_GREEN: vga_color = 2;
 pub const VGA_COLOR_BLUE: vga_color = 1;
 pub const VGA_COLOR_BLACK: vga_color = 0;
 
+const VGA_WIDTH: usize = 80;
+const VGA_HEIGHT: usize = 25;
+const VGA_BUFFER_ADDR: usize = 0xB8000;
+
 #[inline]
-fn vga_entry_color(mut fg: vga_color, mut bg: vga_color) -> uint8_t {
-    return (fg as u32 | (bg as u32) << 4) as uint8_t;
+fn vga_entry_color(fg: vga_color, bg: vga_color) -> uint8_t {
+    (fg | bg << 4) as uint8_t
 }
+
 #[inline]
-fn vga_entry(mut uc: u8, mut color: uint8_t) -> uint16_t {
-    return (uc as u16 as i32
-        | (color as u16 as i32) << 8) as uint16_t;
+fn vga_entry(uc: u8, color: uint8_t) -> uint16_t {
+    uc as uint16_t | (color as uint16_t) << 8
 }
 
-fn strlen(mut str: *const i8) -> usize {
-    let mut len: size_t = 0;
+/// Write a value to VGA text-mode memory. Hardware I/O requires unsafe.
+#[inline(always)]
+fn vga_write(index: usize, value: uint16_t) {
     unsafe {
-        while *str.offset(len as isize) != 0 {
-            len = len.wrapping_add(1);
-            len;
+        let buffer = VGA_BUFFER_ADDR as *mut uint16_t;
+        core::ptr::write_volatile(buffer.add(index), value);
+    }
+}
+
+/// Read a value from VGA text-mode memory. Hardware I/O requires unsafe.
+#[inline(always)]
+fn vga_read(index: usize) -> uint16_t {
+    unsafe {
+        let buffer = VGA_BUFFER_ADDR as *const uint16_t;
+        core::ptr::read_volatile(buffer.add(index))
+    }
+}
+
+struct Terminal {
+    row: size_t,
+    column: size_t,
+    color: uint8_t,
+}
+
+impl Terminal {
+    fn new() -> Self {
+        let color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+        let entry = vga_entry(b' ', color);
+        for i in 0..(VGA_WIDTH * VGA_HEIGHT) {
+            vga_write(i, entry);
         }
+        Terminal { row: 0, column: 0, color }
     }
-    return len;
-}
 
-pub static mut terminal_row: size_t = 0;
-pub static mut terminal_column: size_t = 0;
-pub static mut terminal_color: uint8_t = 0;
-pub static mut terminal_buffer: *mut uint16_t = {
-    0xb8000 as *mut uint16_t
-};
-
-fn terminal_initialize() {
-    unsafe {
-        terminal_row = 0;
-        terminal_column = 0;
-        terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    fn set_color(&mut self, color: uint8_t) {
+        self.color = color;
     }
-    let mut y: size_t = 0;
-    while y < 25 {
-        let mut x: size_t = 0;
-        while x < 80 {
-                let index: size_t = y
-                    .wrapping_mul(80)
-                    .wrapping_add(x);
-                unsafe {
-                *terminal_buffer
-                    .offset(
-                        index as isize,
-                    ) = vga_entry(b' ', terminal_color);
-                x = x.wrapping_add(1);
+
+    fn put_entry_at(&self, c: u8, color: uint8_t, x: size_t, y: size_t) {
+        vga_write(y * VGA_WIDTH + x, vga_entry(c, color));
+    }
+
+    fn move_up(&self) {
+        for y in 1..VGA_HEIGHT {
+            for x in 0..VGA_WIDTH {
+                vga_write((y - 1) * VGA_WIDTH + x, vga_read(y * VGA_WIDTH + x));
             }
-            x;
         }
-        y = y.wrapping_add(1);
-        y;
+        let entry = vga_entry(b' ', self.color);
+        for x in 0..VGA_WIDTH {
+            vga_write((VGA_HEIGHT - 1) * VGA_WIDTH + x, entry);
+        }
     }
-}
 
-fn terminal_setcolor(mut color: uint8_t) {
-    unsafe {
-        terminal_color = color;
-    }
-}
-
-fn terminal_putentryat(
-    mut c: i8,
-    mut color: uint8_t,
-    mut x: size_t,
-    mut y: size_t,
-) {
-    let index: size_t = y
-        .wrapping_mul(80)
-        .wrapping_add(x);
-
-    unsafe {
-        *terminal_buffer.offset(index as isize) = vga_entry(c as u8, color);
-    }
-}
-
-fn terminal_moveup() {
-    let mut y: size_t = 1;
-    while y < 25 {
-        let mut x: size_t = 0;
-        while x < 80 {
-            let from_index: size_t = y
-                .wrapping_mul(80)
-                .wrapping_add(x);
-            let to_index: size_t = y
-                .wrapping_sub(1)
-                .wrapping_mul(80)
-                .wrapping_add(x);
-
-            unsafe {
-            *terminal_buffer
-                .offset(
-                    to_index as isize,
-                ) = *terminal_buffer.offset(from_index as isize);
+    fn putchar(&mut self, c: u8) {
+        if c == b'\n' {
+            self.column = 0;
+            self.row += 1;
+            if self.row == VGA_HEIGHT {
+                self.move_up();
+                self.row = VGA_HEIGHT - 1;
             }
-            x = x.wrapping_add(1);
-            x;
+            return;
         }
-        y = y.wrapping_add(1);
-        y;
+        self.put_entry_at(c, self.color, self.column, self.row);
+        self.column += 1;
+        if self.column == VGA_WIDTH {
+            self.column = 0;
+            self.row += 1;
+            if self.row == VGA_HEIGHT {
+                self.move_up();
+                self.row = VGA_HEIGHT - 1;
+            }
+        }
     }
-    let mut x_0: size_t = 0;
-    while x_0 < 80 {
-        let index: size_t = ((25 - 1) * 80_usize)
-            .wrapping_add(x_0);
 
-        unsafe {
-        *terminal_buffer
-            .offset(
-                index as isize,
-            ) = vga_entry(b' ', terminal_color);
-        }
-        x_0 = x_0.wrapping_add(1);
-        x_0;
-    }
-}
-fn terminal_putchar(mut c: i8) {
-    unsafe {
-    if c as i32 == '\n' as i32 {
-        terminal_column = 0;
-        terminal_row = terminal_row.wrapping_add(1);
-        if terminal_row == 25 {
-            terminal_moveup();
-            terminal_row = 24;
-        }
-        return;
-    }
-    terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-    terminal_column = terminal_column.wrapping_add(1);
-    if terminal_column == 80 {
-        terminal_column = 0;
-        terminal_row = terminal_row.wrapping_add(1);
-        if terminal_row == 25 {
-            terminal_moveup();
-            terminal_row = 24;
-        }
-    }
-}
-}
-fn terminal_write(
-    mut data: *const i8,
-    mut size: size_t,
-) {
-    unsafe {
-    let mut i: size_t = 0;
-        while i < size {
-            terminal_putchar(*data.offset(i as isize));
-            i = i.wrapping_add(1);
-            i;
+    fn write_string(&mut self, s: &[u8]) {
+        for &byte in s {
+            if byte == 0 {
+                break;
+            }
+            self.putchar(byte);
         }
     }
 }
 
-fn terminal_writestring(mut data: *const i8) {
-    terminal_write(data, strlen(data));
+fn rand(seed: i32) -> i32 {
+    seed
 }
 
-fn rand(mut seed: i32) -> i32 {
-    return seed;
-}
-
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn kernel_main() {
-    terminal_initialize();
-    terminal_writestring(
-        b"Hello, kernel World!\n\0" as *const u8 as *const i8,
-    );
-    terminal_writestring(b"Hello, This Works!!\n\0" as *const u8 as *const i8);
-    let mut loop_counter: i32 = 0;
+    let mut terminal = Terminal::new();
+    terminal.write_string(b"\n");
+    terminal.write_string(b" _____ _                       ___  ____  \n");
+    terminal.write_string(b"|_   _| |__   __ _ _   _ _ __ / _ \\/ ___| \n");
+    terminal.write_string(b"  | | | '_ \\ / _` | | | | '_ \\ | | \\___ \\ \n");
+    terminal.write_string(b"  | | | | | | (_| | |_| | | | | |_| |___) |\n");
+    terminal.write_string(b"  |_| |_| |_|\\__,_|\\__,_|_| |_|\\___/|____/ \n");
+    terminal.write_string(b"\n");
 
-
-    unsafe {
-        let mut message: [i8; 26] = *::std::mem::transmute::<
-            &[u8; 26],
-            &mut [i8; 26],
-        >(b"Hello! Thaunos is alive!\n\0");
-
-        loop {
-            loop_counter += 1;
-            loop_counter;
-            let mut i: i32 = 0;
-            while (i as usize)
-                < ::std::mem::size_of::<[i8; 26]>()
-            {
-                loop_counter += 1;
-                loop_counter;
-                let mut rand_value: i32 = rand(loop_counter);
-                if message[i as usize] as i32 == '\n' as i32 {
-                    terminal_putchar('\n' as i32 as i8);
-                } else {
-                    terminal_setcolor(
-                        vga_entry_color(
-                            VGA_COLOR_WHITE,
-                            (rand_value % 16) as vga_color,
-                        ),
-                    );
-                    terminal_putchar(message[i as usize]);
-                    if i as usize
-                        >= ::std::mem::size_of::<[i8; 26]>()
-                            .wrapping_sub(1)
-                    {
-                        i = -1;
-                    }
-                }
-                i += 1;
-                i;
-            }
-        };
-    }
+    terminal.write_string(b"Hello, kernel World!\n");
+    terminal.write_string(b"Hello, This Works!!\n");
 }
