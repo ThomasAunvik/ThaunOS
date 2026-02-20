@@ -122,6 +122,11 @@ packages:
 	sudo apt-get update
 	sudo apt-get install -y build-essential libclang-dev xorriso qemu-system
 
+packages-ci:
+	sudo apt-get update
+	sudo apt-get install -y build-essential libclang-dev xorriso
+
+
 .PHONY: \
 	all \
 	kernel \

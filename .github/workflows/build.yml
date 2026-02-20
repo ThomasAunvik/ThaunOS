@@ -1,4 +1,4 @@
-name: Build
+name: Build x86_64 ISO
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
         run: rustup override set nightly
 
       - name: Install dependencies
-        run: make packages
+        run: make packages-ci
 
       - name: Build with Makefile
         run: make iso
@@ -27,4 +27,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: thaunos-x86_64.iso
-          path: output/thaunos-x86_64.iso
+          path: output/thaunos.iso
