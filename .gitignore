@@ -1,5 +1,5 @@
 *.o
 build/
-iso/
+sysroot/
 output/
 thaunos.bin

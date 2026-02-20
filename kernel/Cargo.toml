@@ -1,6 +1,15 @@
-[package]
-name = "kernel"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+    "arch/i386/vga",
+    "arch/i386/tty",
+    "kernel",
+]
+resolver = "3"
 
-[dependencies]
+[profile.dev]
+panic = "abort"
+opt-level = 2
+
+[profile.release]
+panic = "abort"
+opt-level = 2

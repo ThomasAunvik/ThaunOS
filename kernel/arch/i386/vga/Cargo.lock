@@ -3,19 +3,5 @@
 version = 4
 
 [[package]]
-name = "kernel"
-version = "0.1.0"
-dependencies = [
- "tty",
-]
-
-[[package]]
-name = "tty"
-version = "0.1.0"
-dependencies = [
- "vga",
-]
-
-[[package]]
 name = "vga"
 version = "0.1.0"
