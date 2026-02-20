@@ -1,6 +1,6 @@
 *.o
-./build/
-./sysroot/
-./output/
-./limine/
+build/
+sysroot/
+output/
+limine/
 thaunos.bin
